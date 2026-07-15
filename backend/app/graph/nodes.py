@@ -96,23 +96,29 @@ def make_risk_critic_node(agent):
     return risk_critic
 
 
-def make_investment_synthesis_node():
-    def investment_synthesis(state, config):
+def make_investment_committee_node(agent):
+    def investment_committee(state, config):
         risk_flags = state.get("risk_flags", [])
         latest_critique = risk_flags[-1] if risk_flags else {}
 
         insights = []
         for trend_id, mapping in state.get("company_candidates", {}).items():
             for ticker in mapping.get("tickers", []):
+                psychology = state.get("psychology_insights", {}).get(trend_id)
+                financials = state.get("financial_analysis", {}).get(ticker)
+                committee_review = agent.synthesize(
+                    trend_id, ticker, psychology, financials, latest_critique
+                )
                 insights.append(
                     {
                         "trend": trend_id,
                         "ticker": ticker,
-                        "psychology": state.get("psychology_insights", {}).get(trend_id),
-                        "financials": state.get("financial_analysis", {}).get(ticker),
+                        "psychology": psychology,
+                        "financials": financials,
                         "risk_review": latest_critique,
+                        "committee_review": committee_review,
                     }
                 )
         return {"investment_insights": insights}
 
-    return investment_synthesis
+    return investment_committee

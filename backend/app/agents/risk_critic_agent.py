@@ -11,7 +11,7 @@ class RiskCriticAgent:
         """
         Critique the proposed company mapping and financial read,
         flagging anything that warrants another pass before the
-        graph moves on to investment synthesis.
+        graph moves on to the investment committee.
         """
 
         return self.llm_service.run(

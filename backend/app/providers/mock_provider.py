@@ -45,6 +45,13 @@ class MockProvider(ModelProvider):
                 "reason": "Company mapping and financials are consistent with the trend.",
             }
 
+        if task_type == "investment_committee":
+            return {
+                "recommendation": "BUY",
+                "conviction": "high",
+                "rationale": "Consumer psychology and financial trends both support the thesis.",
+            }
+
         return {
             "result": f"No mock response configured for task_type '{task_type}'",
         }

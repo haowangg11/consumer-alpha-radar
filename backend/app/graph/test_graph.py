@@ -18,7 +18,7 @@ def _memories():
     )
 
 
-# --- happy path: linear run straight through to synthesis ---
+# --- happy path: linear run straight through to the investment committee ---
 trend_memory, company_memory, market_memory = _memories()
 task_memory = TaskMemory()
 
@@ -42,6 +42,10 @@ assert result["retry_count"] == 1
 
 insight_tickers = {insight["ticker"] for insight in result["investment_insights"]}
 assert insight_tickers == {"KDP", "SBUX"}
+assert all(
+    insight["committee_review"]["recommendation"] == "BUY"
+    for insight in result["investment_insights"]
+)
 
 # ingest_signals stashed scratch data in TaskMemory, not in graph state
 assert task_memory.get("raw_signals") is not None
@@ -54,7 +58,7 @@ assert len(market_memory.find_snapshots()) == 2
 print("happy path OK")
 
 
-# --- critique loop: risk_critic forces a revision before synthesis ---
+# --- critique loop: risk_critic forces a revision before the investment committee runs ---
 class FlakyRiskCritic:
     """Flags a revision on its first call, then approves on the next."""
 

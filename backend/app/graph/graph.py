@@ -4,6 +4,7 @@ from langgraph.graph import END, START, StateGraph
 from app.agents.company_mapping_agent import CompanyMappingAgent
 from app.agents.consumer_psychology_agent import ConsumerPsychologyAgent
 from app.agents.financial_agent import FinancialAnalysisAgent
+from app.agents.investment_committee_agent import InvestmentCommitteeAgent
 from app.agents.risk_critic_agent import RiskCriticAgent
 from app.agents.trend_agent import TrendDiscoveryAgent
 from app.graph.edges import route_after_risk_critic
@@ -12,7 +13,7 @@ from app.graph.nodes import (
     make_consumer_psychology_node,
     make_financial_analysis_node,
     make_ingest_signals_node,
-    make_investment_synthesis_node,
+    make_investment_committee_node,
     make_risk_critic_node,
     make_trend_discovery_node,
 )
@@ -48,6 +49,7 @@ def default_offline_agents() -> dict:
         "company_mapping": CompanyMappingAgent(llm_service=mock_llm_service),
         "financial_analysis": FinancialAnalysisAgent(llm_service=mock_llm_service),
         "risk_critic": RiskCriticAgent(llm_service=mock_llm_service),
+        "investment_committee": InvestmentCommitteeAgent(llm_service=mock_llm_service),
     }
 
 
@@ -61,7 +63,7 @@ def build_graph(
     """
     Wires the Trend Discovery -> Consumer Psychology -> Company
     Mapping -> Financial Analysis -> Risk Critic -> Investment
-    Synthesis pipeline as a LangGraph StateGraph. Risk Critic can
+    Committee pipeline as a LangGraph StateGraph. Risk Critic can
     send the graph back to Company Mapping for a bounded number of
     revisions before it is forced to synthesize (see edges.py).
 
@@ -77,6 +79,7 @@ def build_graph(
         "company_mapping": CompanyMappingAgent(),
         "financial_analysis": FinancialAnalysisAgent(),
         "risk_critic": RiskCriticAgent(),
+        "investment_committee": InvestmentCommitteeAgent(),
     }
     skill_service = skill_service or SkillService()
     trend_memory = trend_memory or TrendMemory()
@@ -102,7 +105,10 @@ def build_graph(
         make_financial_analysis_node(agents["financial_analysis"], market_memory),
     )
     graph.add_node("risk_critic", make_risk_critic_node(agents["risk_critic"]))
-    graph.add_node("investment_synthesis", make_investment_synthesis_node())
+    graph.add_node(
+        "investment_committee",
+        make_investment_committee_node(agents["investment_committee"]),
+    )
 
     graph.add_edge(START, "ingest_signals")
     graph.add_edge("ingest_signals", "trend_discovery")
@@ -113,8 +119,8 @@ def build_graph(
     graph.add_conditional_edges(
         "risk_critic",
         route_after_risk_critic,
-        {"revise": "company_mapping", "synthesize": "investment_synthesis"},
+        {"revise": "company_mapping", "synthesize": "investment_committee"},
     )
-    graph.add_edge("investment_synthesis", END)
+    graph.add_edge("investment_committee", END)
 
     return graph.compile(checkpointer=MemorySaver())
