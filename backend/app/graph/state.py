@@ -26,6 +26,9 @@ class GraphState(TypedDict, total=False):
     trends: list[dict]
     psychology_insights: dict
     company_candidates: dict
+    # trend_id -> {ticker -> financial analysis result}, mirroring
+    # company_candidates' trend_id -> {tickers: [...]} shape so a
+    # ticker shared by two trends never collides on a bare key.
     financial_analysis: dict
 
     retry_count: int

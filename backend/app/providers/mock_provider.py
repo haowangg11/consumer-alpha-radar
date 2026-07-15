@@ -9,6 +9,15 @@ class MockProvider(ModelProvider):
     end-to-end before real integrations exist.
     """
 
+    # Canned per-ticker financials, keyed by ticker so each company in
+    # a multi-company trend (e.g. KDP + SBUX under "Protein Coffee")
+    # gets its own figures instead of sharing one hardcoded response.
+    _FINANCIAL_PROFILES = {
+        "KDP": {"revenue_growth": 0.08, "margin_trend": "expanding"},
+        "SBUX": {"revenue_growth": 0.03, "margin_trend": "contracting"},
+    }
+    _DEFAULT_FINANCIAL_PROFILE = {"revenue_growth": 0.05, "margin_trend": "stable"}
+
     def generate(self, task_type: str, payload: dict) -> dict:
         if task_type == "trend_discovery":
             return {
@@ -26,11 +35,11 @@ class MockProvider(ModelProvider):
             }
 
         if task_type == "financial_analysis":
-            return {
-                "ticker": "KDP",
-                "revenue_growth": 0.08,
-                "margin_trend": "expanding",
-            }
+            ticker = payload.get("ticker", "UNKNOWN")
+            profile = self._FINANCIAL_PROFILES.get(
+                ticker, self._DEFAULT_FINANCIAL_PROFILE
+            )
+            return {"ticker": ticker, **profile}
 
         if task_type == "consumer_psychology":
             return {

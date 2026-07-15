@@ -70,13 +70,18 @@ def make_company_mapping_node(agent, company_memory):
 
 def make_financial_analysis_node(agent, market_memory):
     def financial_analysis(state, config):
+        # Nested by trend so companies shared across two trends (or a
+        # revise loop re-running company_mapping) never collide on a
+        # bare ticker key - see GraphState.financial_analysis.
         analysis = {}
         run_id = state.get("run_id", "run")
-        for mapping in state.get("company_candidates", {}).values():
+        for trend_id, mapping in state.get("company_candidates", {}).items():
+            trend_analysis = {}
             for ticker in mapping.get("tickers", []):
                 result = agent.analyze(ticker)
-                analysis[ticker] = result
+                trend_analysis[ticker] = result
                 market_memory.record_snapshot(f"{ticker}_{run_id}", result)
+            analysis[trend_id] = trend_analysis
         return {"financial_analysis": analysis}
 
     return financial_analysis
@@ -103,9 +108,10 @@ def make_investment_committee_node(agent):
 
         insights = []
         for trend_id, mapping in state.get("company_candidates", {}).items():
+            trend_financials = state.get("financial_analysis", {}).get(trend_id, {})
             for ticker in mapping.get("tickers", []):
                 psychology = state.get("psychology_insights", {}).get(trend_id)
-                financials = state.get("financial_analysis", {}).get(ticker)
+                financials = trend_financials.get(ticker)
                 committee_review = agent.synthesize(
                     trend_id, ticker, psychology, financials, latest_critique
                 )

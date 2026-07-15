@@ -18,6 +18,38 @@ def _memories():
     )
 
 
+def _assert_schema_consistency(graph_result):
+    """
+    Regression checks for the financial_analysis ticker mixup: every
+    company under a trend must keep its own financial data, and every
+    investment insight must trace back to the matching trend/ticker
+    without borrowing another company's numbers.
+    """
+
+    for trend_id, mapping in graph_result["company_candidates"].items():
+        tickers = mapping["tickers"]
+        trend_financials = graph_result["financial_analysis"][trend_id]
+
+        # ticker fields match the company keys they're stored under
+        for ticker in tickers:
+            assert trend_financials[ticker]["ticker"] == ticker
+
+        # multiple companies under the same trend keep separate financials
+        # (regression check: a shared-object or copy/paste bug would make
+        # two different tickers' entries compare equal)
+        for i in range(len(tickers)):
+            for j in range(i + 1, len(tickers)):
+                assert trend_financials[tickers[i]] != trend_financials[tickers[j]]
+
+    # investment_insights stay internally consistent: each insight's
+    # financials belong to its own trend/ticker, not another company's
+    for insight in graph_result["investment_insights"]:
+        trend_id, ticker = insight["trend"], insight["ticker"]
+        expected_financials = graph_result["financial_analysis"][trend_id][ticker]
+        assert insight["financials"] == expected_financials
+        assert insight["financials"]["ticker"] == ticker
+
+
 # --- happy path: linear run straight through to the investment committee ---
 trend_memory, company_memory, market_memory = _memories()
 task_memory = TaskMemory()
@@ -33,9 +65,16 @@ result = graph.invoke(
     config={"configurable": {"thread_id": "run_happy", "task_memory": task_memory}},
 )
 
+print(result)
+
 assert result["trends"][0]["trend"] == "Protein Coffee"
 assert result["company_candidates"]["Protein Coffee"]["tickers"] == ["KDP", "SBUX"]
-assert set(result["financial_analysis"].keys()) == {"KDP", "SBUX"}
+
+# financial_analysis is nested trend_id -> ticker -> result, matching
+# company_candidates' shape, so a ticker shared across two trends
+# can never collide on a bare key
+assert set(result["financial_analysis"].keys()) == {"Protein Coffee"}
+assert set(result["financial_analysis"]["Protein Coffee"].keys()) == {"KDP", "SBUX"}
 assert len(result["risk_flags"]) == 1
 assert result["risk_flags"][0]["requires_revision"] is False
 assert result["retry_count"] == 1
@@ -46,6 +85,8 @@ assert all(
     insight["committee_review"]["recommendation"] == "BUY"
     for insight in result["investment_insights"]
 )
+
+_assert_schema_consistency(result)
 
 # ingest_signals stashed scratch data in TaskMemory, not in graph state
 assert task_memory.get("raw_signals") is not None
@@ -93,5 +134,7 @@ assert flaky_critic.calls == 2
 assert loop_result["retry_count"] == 2
 assert [flag["requires_revision"] for flag in loop_result["risk_flags"]] == [True, False]
 assert loop_result["investment_insights"]
+
+_assert_schema_consistency(loop_result)
 
 print("critique loop OK")
