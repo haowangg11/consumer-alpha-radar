@@ -18,6 +18,20 @@ class MockProvider(ModelProvider):
                 "reason": "Growing demand for healthy convenient drinks",
             }
 
+        if task_type == "company_mapping":
+            return {
+                "trend": "Protein Coffee",
+                "tickers": ["KDP", "SBUX"],
+                "reason": "Both companies sell ready-to-drink coffee and protein beverages",
+            }
+
+        if task_type == "financial_analysis":
+            return {
+                "ticker": "KDP",
+                "revenue_growth": 0.08,
+                "margin_trend": "expanding",
+            }
+
         return {
             "result": f"No mock response configured for task_type '{task_type}'",
         }
