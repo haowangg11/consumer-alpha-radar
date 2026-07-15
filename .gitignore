@@ -30,6 +30,9 @@ htmlcov/
 # FastAPI / uvicorn
 *.log
 
+# Persisted memory (JSONFileMemoryStore default location)
+backend/data/
+
 # Editors / OS
 .vscode/
 .idea/
