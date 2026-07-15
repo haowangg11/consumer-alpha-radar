@@ -6,13 +6,13 @@ router = ModelRouter()
 
 print(
     router.select_model(
-        "financial_reasoning"
+        "financial_analysis"
     )
 )
 
 
 print(
     router.select_model(
-        "chinese_text"
+        "trend_discovery"
     )
 )

@@ -1,26 +1,7 @@
 from app.models.router import ModelRouter, ModelType
-
-
-class MockModelProvider:
-    """
-    Stand-in Model Provider. Returns deterministic structured
-    responses instead of calling a real LLM API, so the
-    Agent -> Service -> Router -> Provider chain can be exercised
-    end-to-end before real integrations exist.
-    """
-
-    def generate(self, model: ModelType, task_type: str, payload: dict) -> dict:
-        if task_type == "trend_discovery":
-            return {
-                "trend": "Protein Coffee",
-                "category": "Food & Beverage",
-                "momentum_score": 85,
-                "reason": "Growing demand for healthy convenient drinks",
-            }
-
-        return {
-            "result": f"No mock response configured for task_type '{task_type}'",
-        }
+from app.providers.openai_provider import OpenAIProvider
+from app.providers.deepseek_provider import DeepSeekProvider
+from app.providers.qwen_provider import QwenProvider
 
 
 class LLMService:
@@ -30,10 +11,15 @@ class LLMService:
     to a Model Provider. Agents must never call a provider directly.
     """
 
-    def __init__(self, router: ModelRouter = None, provider: MockModelProvider = None):
+    def __init__(self, router: ModelRouter = None, providers: dict = None):
         self.router = router or ModelRouter()
-        self.provider = provider or MockModelProvider()
+        self.providers = providers or {
+            ModelType.GPT: OpenAIProvider(),
+            ModelType.DEEPSEEK: DeepSeekProvider(),
+            ModelType.QWEN: QwenProvider(),
+        }
 
     def run(self, task_type: str, payload: dict) -> dict:
         model = self.router.select_model(task_type)
-        return self.provider.generate(model=model, task_type=task_type, payload=payload)
+        provider = self.providers[model]
+        return provider.generate(task_type=task_type, payload=payload)

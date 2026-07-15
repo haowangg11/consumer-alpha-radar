@@ -9,13 +9,13 @@ class ModelType(Enum):
 
 class ModelRouter:
 
-    def select_model(self, task_type: str):
+    TASK_MODEL_MAP = {
+        "trend_discovery": ModelType.QWEN,
+        "consumer_psychology": ModelType.QWEN,
+        "financial_analysis": ModelType.GPT,
+        "investment_committee": ModelType.GPT,
+        "cost_sensitive_summary": ModelType.DEEPSEEK,
+    }
 
-        if task_type == "financial_reasoning":
-            return ModelType.GPT
-        
-        elif task_type == "chinese_text":
-            return ModelType.QWEN
-        
-        else:
-            return ModelType.DEEPSEEK
+    def select_model(self, task_type: str) -> ModelType:
+        return self.TASK_MODEL_MAP.get(task_type, ModelType.DEEPSEEK)
