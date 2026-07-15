@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     google_trends_api_key: str | None = None
     reddit_client_id: str | None = None
     reddit_client_secret: str | None = None
+    reddit_user_agent: str | None = None
+    reddit_search_window: str = "week"
     stock_data_api_key: str | None = None
 
     http_timeout_seconds: float = 10.0

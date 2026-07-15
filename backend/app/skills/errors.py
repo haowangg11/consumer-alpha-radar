@@ -38,3 +38,9 @@ class SkillInvalidPayloadError(SkillError):
     """Raised when a skill is called with a payload it cannot use."""
 
     retryable = False
+
+
+class SkillInvalidResponseError(SkillError):
+    """Raised when an external API's response doesn't match the shape a skill expects."""
+
+    retryable = False

@@ -7,6 +7,24 @@ def _task_memory(config):
     return (config or {}).get("configurable", {}).get("task_memory")
 
 
+def _reddit_summary(reddit: dict) -> str:
+    """
+    Reddit's response follows the Skill contract (see app.skills.responses):
+    success puts the raw signal under "data", failure puts a message
+    under "error" - there's no shared "detail" key to fall back on like
+    the still-stubbed google_trends skill has, so this has to branch.
+    """
+
+    if reddit.get("status") == "ok":
+        data = reddit["data"]
+        sample_titles = [post["title"] for post in data.get("posts", [])[:3]]
+        return (
+            f"{data['mentions']} mentions, avg_score={data['avg_score']:.1f}, "
+            f"avg_comments={data['avg_comments']:.1f}, sample titles={sample_titles}"
+        )
+    return f"reddit signal unavailable: {reddit.get('error', {}).get('message', reddit)}"
+
+
 def make_ingest_signals_node(skill_service):
     def ingest_signals(state, config):
         keywords = state.get("keywords", [])
@@ -26,7 +44,7 @@ def make_ingest_signals_node(skill_service):
         return {
             "raw_consumer_data": [
                 f"google_trends[{keywords}]: {google_trends.get('detail', google_trends)}",
-                f"reddit[{keywords}]: {reddit.get('detail', reddit)}",
+                f"reddit[{keywords}]: {_reddit_summary(reddit)}",
             ]
         }
 
