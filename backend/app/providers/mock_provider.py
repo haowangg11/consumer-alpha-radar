@@ -32,6 +32,19 @@ class MockProvider(ModelProvider):
                 "margin_trend": "expanding",
             }
 
+        if task_type == "consumer_psychology":
+            return {
+                "trend": "Protein Coffee",
+                "psychology": "Health-conscious convenience seeking",
+                "confidence": 0.8,
+            }
+
+        if task_type == "risk_critic":
+            return {
+                "requires_revision": False,
+                "reason": "Company mapping and financials are consistent with the trend.",
+            }
+
         return {
             "result": f"No mock response configured for task_type '{task_type}'",
         }
