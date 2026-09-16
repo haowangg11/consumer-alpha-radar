@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     reddit_user_agent: str | None = None
     reddit_search_window: str = "week"
     stock_data_api_key: str | None = None
+    fuyao_api_key: str | None = None
+    fuyao_base_url: str = "https://fuyao.aicubes.cn"
 
     http_timeout_seconds: float = 10.0
     http_max_retries: int = 3

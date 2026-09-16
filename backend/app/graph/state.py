@@ -21,6 +21,9 @@ class GraphState(TypedDict, total=False):
 
     run_id: str
     keywords: list[str]
+    # Optional market context for cross-market discovery runs.
+    codes: list[str]
+    symbols: list[str]
 
     raw_consumer_data: list[str]
     trends: list[dict]

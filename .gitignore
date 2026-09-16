@@ -7,12 +7,18 @@ __pycache__/
 # Virtual environments
 venv/
 .venv/
+.venv-*/
 env/
 ENV/
+node_modules/
+node_modules-*/
 
 # Distribution / packaging
 build/
 dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
 *.egg-info/
 
 # Testing / caches
@@ -32,6 +38,7 @@ htmlcov/
 
 # Persisted memory / evaluation traces (JSONFileMemoryStore default location)
 backend/data/
+backend/app/data_sources/vibe_research/.cache/
 
 # Editors / OS
 .vscode/

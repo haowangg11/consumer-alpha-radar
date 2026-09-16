@@ -10,7 +10,7 @@ result = registry.get("google_trends").run(
 assert result["skill"] == "google_trends"
 
 metadata_list = registry.list_metadata()
-assert {m.name for m in metadata_list} == {"google_trends", "reddit", "stock_data"}
+assert {m.name for m in metadata_list} == {"google_trends", "reddit", "stock_data", "market_data"}
 assert all(m.version for m in metadata_list)
 
 try:

@@ -7,44 +7,38 @@ def _task_memory(config):
     return (config or {}).get("configurable", {}).get("task_memory")
 
 
-def _reddit_summary(reddit: dict) -> str:
-    """
-    Reddit's response follows the Skill contract (see app.skills.responses):
-    success puts the raw signal under "data", failure puts a message
-    under "error" - there's no shared "detail" key to fall back on like
-    the still-stubbed google_trends skill has, so this has to branch.
-    """
-
-    if reddit.get("status") == "ok":
-        data = reddit["data"]
-        sample_titles = [post["title"] for post in data.get("posts", [])[:3]]
-        return (
-            f"{data['mentions']} mentions, avg_score={data['avg_score']:.1f}, "
-            f"avg_comments={data['avg_comments']:.1f}, sample titles={sample_titles}"
-        )
-    return f"reddit signal unavailable: {reddit.get('error', {}).get('message', reddit)}"
-
-
 def make_ingest_signals_node(skill_service):
     def ingest_signals(state, config):
         keywords = state.get("keywords", [])
-        google_trends = skill_service.run(
-            "google_trends", "keyword_interest", {"keywords": keywords}
-        )
-        reddit = skill_service.run(
-            "reddit", "sentiment_scan", {"subreddit": "all", "keywords": keywords}
+        track = keywords[0] if keywords else ""
+        market_news = skill_service.run(
+            "market_data", "news_radar", {"track": track, "per_track": 5}
         )
 
-        task_memory = _task_memory(config)
-        if task_memory is not None:
-            task_memory.set(
-                "raw_signals", {"google_trends": google_trends, "reddit": reddit}
+        stock_snapshots = {}
+        for code in state.get("codes", []):
+            stock_snapshots[code] = skill_service.run(
+                "market_data", "a_share_snapshot", {"code": code}
+            )
+        for symbol in state.get("symbols", []):
+            stock_snapshots[symbol] = skill_service.run(
+                "market_data", "global_stock", {"symbol": symbol}
             )
 
+        task_memory = _task_memory(config)
+        raw_signals = {
+            "market_news": market_news,
+            "stock_snapshots": stock_snapshots,
+        }
+        if task_memory is not None:
+            task_memory.set("raw_signals", raw_signals)
+
+        news_data = market_news.get("data", {})
+        news_count = len(news_data.get("items", [])) if isinstance(news_data, dict) else 0
         return {
             "raw_consumer_data": [
-                f"google_trends[{keywords}]: {google_trends.get('detail', google_trends)}",
-                f"reddit[{keywords}]: {_reddit_summary(reddit)}",
+                f"market_news[{track or 'all'}]: {news_count} items from cross-market sector radar",
+                f"stock_snapshots: {stock_snapshots}",
             ]
         }
 

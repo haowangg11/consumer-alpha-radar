@@ -1,6 +1,7 @@
 from app.skills.base import Skill
 from app.skills.metadata import SkillMetadata
 from app.skills.google_trends_skill import GoogleTrendsSkill
+from app.skills.market_data_skill import MarketDataSkill
 from app.skills.reddit_skill import RedditSkill
 from app.skills.stock_data_skill import StockDataSkill
 
@@ -17,6 +18,7 @@ class SkillRegistry:
             "google_trends": GoogleTrendsSkill(),
             "reddit": RedditSkill(),
             "stock_data": StockDataSkill(),
+            "market_data": MarketDataSkill(),
         }
 
     def get(self, name: str) -> Skill:
